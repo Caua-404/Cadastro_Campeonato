@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Confirmação de Presença</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="icon" href="/Riquelme/IMG/icon.png" type="image/x-icon" />
+  </head>
+  <body>
+    <div class="background-container">
+      <form
+      action="https://gmail.us16.list-manage.com/subscribe/post?u=0b50bced3a14574925ad62404&amp;id=d86504635f&amp;f_id=00fc9ae1f0"
+      method="post"
+      id="mc-embedded-subscribe-form"
+      name="mc-embedded-subscribe-form"
+      class="validate"
+      target="_self"
+      novalidate=""
+    >
+        <img
+          src="/Riquelme/IMG/casal.png"
+          alt="Imagem topo"
+          class="topo-imagem"
+        />
+        <h2>Confirma sua presença?</h2>
+
+        <label>
+          <input
+            type="text"
+            id="nome"
+            placeholder="Seu nome"
+            required
+            name="FNAME"
+          />
+          <input type="hidden" id="emailOculto" name="EMAIL" />
+        </label>
+
+        <label>
+          <input
+            type="radio"
+            name="presenca"
+            value="Estarei presente"
+            required
+          />
+          Estarei presente
+        </label>
+        <label>
+          <input
+            type="radio"
+            name="presenca"
+            value="Agradeço o convite, mas infelizmente não poderei estar presente"
+          />
+          Agradeço o convite, mas infelizmente não poderei estar presente
+        </label>
+
+        <input type="hidden" id="confirmacaoOculta" name="COMPANY" />
+
+        <button type="submit" name="subscribe"><span>Enviar</span></button>
+      </form>
+      <img
+        src="/Riquelme/IMG/borboletaa.png"
+        alt="Borboleta"
+        class="borboleta-carimbo"
+      />
+    </div>
+
+    <div id="petalas-container"></div>
+    <script src="script.js"></script>
+  </body>
+</html>
