@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <!DOCTYPE html>
 <html lang="pt-BR">
   <head>
@@ -68,4 +69,163 @@
     <div id="petalas-container"></div>
     <script src="script.js"></script>
   </body>
+=======
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Cadastro de Atletas — Shotokan</title>
+
+  <!-- Fontes (identidade visual) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Sawarabi+Mincho&family=Noto+Serif+JP:wght@400;700&display=swap" rel="stylesheet">
+
+  <!-- Estilos -->
+  <link rel="stylesheet" href="css/inscricoes.css" />
+</head>
+<body class="inscricoes-page">
+  <!-- Fundo com atletas e animação -->
+  <section class="enroll-hero" aria-hidden="true">
+    <img class="bg-fighter left" src="assets/atleta-esquerda.png" alt="">
+    <img class="bg-fighter right" src="assets/atleta-direita.png" alt="">
+  </section>
+
+  <!-- Cartão de vidro com o formulário -->
+  <main class="container">
+    <div class="glass-card" role="form" aria-labelledby="formTitle">
+      <header class="form-header">
+        <img src="assets/shotokan-logo.png" alt="" class="form-logo" width="40" height="40" />
+        <div>
+          <h1 id="formTitle" class="form-title">Cadastro para Campeonato</h1>
+          <p class="form-sub">Todos os campos são obrigatórios.</p>
+        </div>
+      </header>
+
+      <form id="enrollForm" novalidate>
+        <!-- Campo oculto (idade), usado só no PDF depois -->
+        <input type="hidden" id="idade_atual" name="idade_atual" value="">
+
+        <!-- Campeonato + Federação -->
+        <div class="grid">
+          <div class="field">
+            <label class="sr-only" for="campeonato">Campeonato</label>
+            <select id="campeonato" required>
+              <option value="" disabled selected>Campeonato</option>
+              <option>Campeonato Paraense de Karatê</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label class="sr-only" for="federacao">Federação</label>
+            <select id="federacao" required>
+              <option value="" disabled selected>Federação</option>
+              <option>FEPAKI</option>
+              <option>Outra</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Nome + Sexo -->
+        <div class="grid">
+          <div class="field">
+            <label class="sr-only" for="nome">Nome completo</label>
+            <input type="text" id="nome" placeholder="Nome completo do atleta" maxlength="80" required>
+          </div>
+
+          <div class="field">
+            <label class="sr-only" for="sexo">Sexo</label>
+            <select id="sexo" required>
+              <option value="" disabled selected>Sexo</option>
+              <option>F</option>
+              <option>M</option>
+              <option>Outro</option>
+              <option>Prefiro não dizer</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Data de nascimento + Graduação -->
+        <div class="grid">
+          <div class="field field--dob">
+            <label class="sr-only" for="data_nascimento">Data de nascimento</label>
+            <input
+              type="text"
+              id="data_nascimento"
+              placeholder="Data de nascimento (DD/MM/AAAA)"
+              inputmode="numeric"
+              required
+            />
+            <!-- input nativo de data para abrir o calendário -->
+            <input type="date" id="data_nascimento_picker" class="date-native" aria-label="Abrir calendário" />
+            <button type="button" class="calendar-ico" aria-label="Selecionar data no calendário">📅</button>
+          </div>
+
+          <!-- Graduação (custom, obrigatório) -->
+          <div class="field belt-field" data-belt="">
+            <label class="sr-only" for="graduacao_input">Graduação</label>
+            <input id="graduacao_input" type="text" placeholder="Graduação" readonly aria-haspopup="listbox" aria-expanded="false" aria-required="true">
+            <span class="belt-swatch" aria-hidden="true"></span>
+            <button type="button" class="belt-toggle" aria-label="Selecionar graduação" aria-haspopup="listbox">▼</button>
+
+            <ul class="belt-list" role="listbox" aria-label="Selecione a graduação">
+              <li role="option" data-value="Branca"   data-color="#f1f5f9"><span class="dot" style="--c:#f1f5f9"></span>Branca</li>
+              <li role="option" data-value="Amarela"  data-color="#fef08a"><span class="dot" style="--c:#fef08a"></span>Amarela</li>
+              <li role="option" data-value="Vermelha" data-color="#E10000"><span class="dot" style="--c:#E10000"></span>Vermelha</li>
+              <li role="option" data-value="Laranja"  data-color="#f59e0b"><span class="dot" style="--c:#f59e0b"></span>Laranja</li>
+              <li role="option" data-value="Verde"    data-color="#34d399"><span class="dot" style="--c:#34d399"></span>Verde</li>
+              <li role="option" data-value="Roxa"     data-color="#a78bfa"><span class="dot" style="--c:#a78bfa"></span>Roxa</li>
+              <li role="option" data-value="Marrom"   data-color="#a16207"><span class="dot" style="--c:#a16207"></span>Marrom</li>
+              <li role="option" data-value="Preta"    data-color="#111111"><span class="dot" style="--c:#111111"></span>Preta</li>
+            </ul>
+
+            <!-- valor real; validamos por JS porque inputs hidden não entram no required nativo -->
+            <input type="hidden" id="graduacao" name="graduacao" value="">
+          </div>
+        </div>
+
+        <!-- Cidade / UF -->
+        <div class="grid">
+          <div class="field">
+            <label class="sr-only" for="cidade">Cidade</label>
+            <input type="text" id="cidade" placeholder="Cidade" required>
+          </div>
+          <div class="field">
+            <label class="sr-only" for="uf">UF</label>
+            <input type="text" id="uf" placeholder="UF" maxlength="2" pattern="[A-Za-z]{2}" required>
+          </div>
+        </div>
+
+        <!-- Contato -->
+        <div class="grid">
+          <div class="field">
+            <label class="sr-only" for="telefone">Número para contato</label>
+            <input type="tel" id="telefone" placeholder="Telefone (DDD + número)" inputmode="tel" required pattern=".*\d{10,}.*">
+          </div>
+          <div class="field">
+            <label class="sr-only" for="email">Email</label>
+            <input type="email" id="email" placeholder="Email para confirmação" required>
+          </div>
+        </div>
+
+        <!-- Ações (PDF desativado) -->
+        <div class="actions">
+          <button type="submit" class="btn-primary">Salvar</button>
+          <button type="button" id="btnPdf" class="btn-secondary">Gerar PDF</button>
+        </div>
+
+        <p id="formMsg" class="form-msg" role="status" aria-live="polite"></p>
+      </form>
+    </div>
+  </main>
+  <!-- pdfmake (com vfs) e o gerador PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.12/pdfmake.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.12/vfs_fonts.js"></script>
+  <script src="js/pdf.js"></script>
+
+  <!-- JS -->
+  <script src="js/inscricoes.js" defer></script>
+</body>
+>>>>>>> 548ae54 (Publicação inicial - inscrições)
 </html>
