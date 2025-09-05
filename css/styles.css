@@ -1,0 +1,279 @@
+:root{
+  --bg: #EEECEC;
+  --text: #111;
+  --muted: #6b7280;
+  --border: rgba(0,0,0,.08);
+  --red: #FF0000;
+  --ground-h: 70px;
+
+  /* tamanhos por atleta*/
+  --fighter-left-h-mobile:  clamp(360px, 54vh, 620px);
+  --fighter-right-h-mobile: clamp(340px, 52vh, 600px);
+
+  --fighter-left-h-desktop:  clamp(950px, 62vh, 840px);
+  --fighter-right-h-desktop: clamp(660px, 60vh, 780px);
+
+  --radius: 16px;
+  --brand-font: 'Sawarabi Mincho', serif;
+  --jp-font: 'Noto Serif JP', serif;
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--jp-font);
+}
+.container { width: 100%; max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+
+/* ===== Header ===== */
+.site-header {
+  position: sticky; top: 0; z-index: 50;
+  background: rgba(238,236,236,.86);
+  backdrop-filter: blur(8px);
+}
+.header-inner {
+  height: 68px; display: flex; align-items: center; justify-content: center;
+  position: relative;
+}
+
+/* desktop nav centrado */
+.nav-desktop { display: none; gap: 32px; align-items: center; }
+
+.nav-desktop a {
+  text-decoration: none;
+  color: var(--muted);                 /* cinza padrão */
+  padding: 10px 12px;
+  font-size: clamp(16px, 1.4vw, 20px); /* ↑ maior e responsivo */
+  border-radius: 8px;
+  font-weight: 600;
+  letter-spacing: .02em;
+  position: relative;                  /* necessário p/ a barrinha */
+  transition: color .2s ease;
+}
+
+.nav-desktop a:hover { color: var(--text); }  /* preto no hover */
+
+.nav-desktop a::after {
+  content: "";
+  position: absolute;
+  left: 10px; right: 10px; bottom: -6px;     /* barrinha vermelha */
+  height: 3px;
+  background: var(--red);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform .2s ease;
+}
+
+.nav-desktop a:hover::after { transform: scaleX(1); }
+
+.nav-logo-slot img { width: 28px; height: 28px; object-fit: contain; border-radius: 999px; background: #fff; box-shadow: 0 1px 0 rgba(0,0,0,.06); }
+
+.menu-toggle {
+  position: absolute; right: 12px;
+  background: transparent; border: 0; padding: 8px; border-radius: 10px; cursor: pointer;
+}
+.menu-icon, .menu-icon::before, .menu-icon::after {
+  display: block; width: 22px; height: 2px; background: var(--text); position: relative; content: "";
+}
+.menu-icon::before { position: absolute; left: 0; top: -6px; }
+.menu-icon::after  { position: absolute; left: 0; top:  6px; }
+
+.nav-mobile a { text-decoration: none; color: var(--muted); padding: 10px 8px; border-radius: 10px; font-weight: 600; position: relative; transition: color .2s ease; }
+.nav-mobile a:hover { color: var(--text); }
+.nav-mobile a::after { content: ""; position: absolute; left: 8px; right: 8px; bottom: 4px; height: 2px; background: var(--red); transform: scaleX(0); transform-origin: left; transition: transform .2s ease; }
+.nav-mobile a:hover::after { transform: scaleX(1); }
+
+
+@media (min-width: 1024px) {
+  .nav-desktop { display: flex; }
+  .menu-toggle { display: none; }
+}
+
+/* ===== Hero ===== */
+.hero {
+  position: relative; 
+  overflow: hidden;
+  padding: 84px 0 550px;
+}
+
+/* Faixa/base: só no mobile e ACIMA das atletas */
+.hero-bg-accent{
+  position: absolute; left: 0; right: 0; bottom: 0;
+  height: var(--ground-h); background: var(--red);
+  z-index: 2;                     /* acima das atletas */
+  pointer-events: none;
+  display: block;                 /* mobile: aparece */
+}
+
+/* ===== Lutadoras (tamanho/respiração padronizados) ===== */
+.fighter{
+  position: absolute; 
+  bottom: calc(var(--ground-h) * -0.25);
+  height: var(--fighter-h-mobile);   /* usa variável (mobile) */
+  width: auto;
+  filter: grayscale(100%);
+  user-select: none; pointer-events: none;
+  will-change: transform;
+  z-index: 1;                        /* abaixo da faixa, acima do fundo */
+}
+
+/* Posicionamento individual + animação (MOBILE) */
+.fighter.left{
+  left: -32px;
+  bottom: -170px;
+  height: var(--fighter-left-h-mobile);     /* ← altura só da atleta ESQUERDA no mobile */
+  transform-origin: 60% 90%;
+  animation: breath 6s ease-in-out infinite;
+}
+
+  .fighter.right{
+    right: -48px;
+    bottom: 0;
+    height: var(--fighter-right-h-desktop);  /* ← altura só da DIREITA no desktop */
+  }
+
+@keyframes breath{
+  0%,100% { transform: translateY(0) scale(1); }
+  50%     { transform: translateY(-10px) scale(1.02); }
+}
+
+.fighter.left  { left: -32px; transform-origin: 60% 90%; animation: breath 6s ease-in-out infinite; height: var(--fighter-left-h-mobile); }
+.fighter.right { right: -32px; transform-origin: 40% 90%; animation: breath 6s ease-in-out infinite reverse; height: var(--fighter-right-h-mobile); }
+.torii-img{
+  display: block;
+  width: clamp(64px, 8vw, 120px);   /* cresce conforme a tela */
+  height: auto;
+  margin: 0 auto 18px auto;         /* espaço acima do título */
+  object-fit: contain;
+  user-select: none;
+  pointer-events: none;
+  opacity: .98;
+}
+
+@media (min-width: 1024px){
+    .fighter{ height: var(--fighter-h-desktop); }
+    .fighter.left  { left: -48px; height: var(--fighter-left-h-desktop); }
+    .fighter.right { right: -48px; height: var(--fighter-right-h-desktop); }
+}
+
+/* Conteúdo central sempre por cima */
+.hero-center{ position: relative; z-index: 3; text-align: center; }
+
+
+.title { margin: 0; line-height: 1.05; }
+.title-top{
+  display: inline-block;
+  font-family: var(--brand-font);
+  font-size: clamp(56px, 9vw, 112px);  /* ↑ aumentamos bem */
+  border-bottom: 5px solid var(--red); /* sublinhado mais marcado */
+  padding-bottom: 10px;
+}
+
+.title-bottom{
+  display: inline-block;
+  font-family: var(--brand-font);
+  font-size: clamp(40px, 6.5vw, 80px); /* ↑ maior */
+  letter-spacing: .16em;               /* um pouco mais aberto */
+  padding-bottom: 6px;
+}
+
+.subtitle{
+  max-width: 680px;                    /* um pouco mais largo */
+  margin: 16px auto 0;
+  color: var(--muted);
+  font-size: clamp(16px, 1.6vw, 20px); /* melhora leitura em telas grandes */
+}
+
+.cta-row { margin-top: 18px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+.btn-primary{
+/* base vermelha + camada preta animável por cima */
+  background:
+    linear-gradient(#000, #000) left/0% 100% no-repeat, /* camada preta (0% → 100%) */
+    var(--red);                                         /* base vermelha */
+  color:#fff;
+  padding: 12px 20px;
+  border-radius: 999px;
+  text-decoration: none;
+  font-weight: 700;
+  box-shadow: 0 6px 0 #cc0000;
+  transition:
+    background-size .28s ease,  /* anima o preenchimento preto */
+    transform .06s ease,
+    box-shadow .06s ease,
+   filter .2s ease;
+ will-change: background-size
+}
+.btn-primary:hover {
+  background-size: 100% 100%, cover;  /* preto cresce e cobre o vermelho */
+  filter: none;
+}
+.btn-primary:active { transform: translateY(2px); box-shadow: 0 4px 0 #cc0000; }
+
+.btn-music {
+  background: #fff; border: 1px solid var(--text); color: var(--text);
+  padding: 12px 14px; border-radius: 999px; font-weight: 700; cursor: pointer;
+}
+.btn-music[aria-pressed="true"] { background: var(--text); color:#fff; }
+
+/* ===== Sections ===== */
+.section { padding: 64px 0; }
+.section.alt { background: rgba(255,255,255,.5); }
+.section-title{
+  text-align: center; margin: 0 0 28px; font-family: var(--brand-font);
+  font-size: clamp(26px, 3.5vw, 44px);
+}
+
+.section-grid { display: grid; gap: 24px; grid-template-columns: 1fr; align-items: center; }
+@media (min-width: 1024px){
+  .section-grid { grid-template-columns: 1.1fr 1fr; }
+  .section-grid.reverse { grid-template-columns: 1fr 1.1fr; }
+}
+.section-text h2 { font-family: var(--brand-font); margin: 0 0 8px; font-size: clamp(22px, 3vw, 32px); }
+.section-text p  { color: var(--muted); margin: 0; }
+.section-figure {
+  min-height: 160px; border-radius: 20px; background: #fff; border: 1px solid var(--border);
+}
+
+/* DOJO KUN layout específico */
+.dojo .dojo-grid{
+  display: grid; gap: 28px; align-items: start;
+  grid-template-columns: 1fr;
+}
+.dojo-figure{ text-align: center; }
+.dojo-figure img{ max-width: 380px; width: 100%; height: auto; filter: grayscale(100%); }
+.dojo-text p{ margin: 0 0 14px; line-height: 1.65; }
+@media (min-width: 1024px){
+  .dojo .dojo-grid{ grid-template-columns: .9fr 1.1fr; }
+}
+.dojo-note{ margin-top: 14px; color: var(--muted); }
+
+/* LOGO central entre seções */
+.logo-divider { display:flex; justify-content:center; padding: 18px 0 0; }
+.logo-divider img { width: 80px; height: 80px; object-fit: contain; opacity:.95; }
+
+/* Faixas */
+.belts { display:flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; justify-content: center; }
+.belt {
+  padding: 8px 12px; border-radius: 12px; background: #fff; border: 1px solid var(--border);
+  font-size: 14px; font-weight: 600;
+}
+.belt.white  { background: #fff; }
+.belt.yellow { background: #FEF08A; }
+.belt.orange { background: #F59E0B; color:#fff; }
+.belt.green  { background: #34D399; }
+.belt.blue   { background: #60A5FA; }
+.belt.purple { background: #A78BFA; }
+.belt.brown  { background: #A16207; color:#fff; }
+.belt.black  { background: #111; color:#fff; }
+
+/* Footer */
+.site-footer { padding: 40px 0; border-top: 1px solid var(--border); text-align:center; color: var(--muted); }
+
+/* utilidades */
+[hidden]{ display:none !important; }
+@media (min-width:1024px){
+  .nav-mobile{ display:none !important; }
+}

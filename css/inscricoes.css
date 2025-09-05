@@ -1,0 +1,232 @@
+/* =========================
+   Paleta e tokens visuais
+   ========================= */
+:root{
+  --bg:#EEECEC;           /* fundo claro padrão */
+  --red:#E10000;          /* vermelho institucional */
+  --red-acc:#FF2A2A;      /* acento/hover */
+  --text:#111;            /* texto */
+  --muted:#6b7280;        /* cinza texto secundário */
+  --glass-bg:rgba(255,255,255,0.35);
+  --glass-brd:rgba(255,255,255,0.55);
+  --ring: rgba(225,0,0,.25);
+}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Noto Serif JP", ui-serif, Georgia, "Times New Roman", serif;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+}
+
+/* =========================
+   Hero com atletas
+   ========================= */
+.enroll-hero{
+  position:fixed; inset:0; pointer-events:none; z-index:-1; overflow:hidden;
+}
+.bg-fighter{
+  position:absolute; opacity:0.9;
+  filter: saturate(1.05) contrast(1.02);
+  animation: floatY 6s ease-in-out infinite;
+}
+.bg-fighter.left{ width:min(42vw,900px); bottom:-500px; left:-80px; transform: scaleX(-1); animation-delay: .3s; }
+.bg-fighter.right{ width:min(42vw,680px); bottom:-20px; right:-80px; animation-delay: 1s; }
+
+@keyframes floatY{
+  0%,100%{ transform: translateY(0) }
+  50%{ transform: translateY(-16px) }
+}
+
+/* =========================
+   Container e cartão de vidro
+   ========================= */
+.container{
+  max-width: 980px; margin: 6rem auto; padding: 0 16px;
+}
+.glass-card{
+  background: var(--glass-bg);
+  backdrop-filter: blur(14px) saturate(120%);
+  -webkit-backdrop-filter: blur(14px) saturate(120%);
+  border: 1px solid var(--glass-brd);
+  border-radius: 24px;
+  box-shadow: 0 12px 34px rgba(0,0,0,.12);
+  padding: 20px clamp(18px, 3vw, 28px);
+}
+
+/* Cabeçalho do formulário */
+.form-header{ display:flex; gap:12px; align-items:center; margin-bottom: 12px; }
+.form-logo{ border-radius: 12px; }
+.form-title{
+  margin:0; font-family: "Sawarabi Mincho", serif; letter-spacing:.3px;
+}
+.form-sub{ margin:.25rem 0 0; color: var(--muted); font-size:.95rem; }
+
+/* =========================
+   Grid e campos
+   ========================= */
+.grid{
+  display:grid; gap:12px;
+  grid-template-columns: repeat(12, 1fr);
+  margin-bottom: 10px;
+}
+.field{ grid-column: span 6; position:relative; }
+@media (max-width: 720px){
+  .field{ grid-column: span 12; }
+}
+
+.field input,
+.field select{
+  width:100%; height:48px;
+  border-radius: 14px;
+  border:1px solid rgba(0,0,0,.08);
+  background: rgba(255,255,255,.85);
+  padding: 0 14px;
+  color:var(--text);
+  outline: none;
+  transition: box-shadow .2s ease, border-color .2s ease, background .2s ease;
+}
+
+.field input::placeholder{ color:#9ca3af }
+.field input:focus, .field select:focus{
+  border-color: var(--red);
+  box-shadow: 0 0 0 4px var(--ring);
+  background:#fff;
+}
+
+/* rótulos apenas para acessibilidade/SEO */
+.sr-only{
+  position:absolute !important; width:1px; height:1px; padding:0; margin:-1px;
+  overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0;
+}
+
+/* ===== Data de nascimento ===== */
+.field--dob input#data_nascimento{ padding-right: 90px; }
+.date-native{
+  position:absolute; inset:auto 44px 8px auto; height:32px; width:1px; opacity:0; pointer-events:none;
+}
+.calendar-ico{
+  position:absolute; right:8px; top:8px; height:32px; width:32px;
+  border-radius:10px; border:1px solid rgba(0,0,0,.08);
+  background:#fff; cursor:pointer;
+  transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+}
+.calendar-ico:hover{ transform: translateY(-1px); box-shadow: 0 4px 16px rgba(0,0,0,.08) }
+.calendar-ico:active{ transform: translateY(0); }
+.calendar-ico:focus{ outline:none; box-shadow: 0 0 0 4px var(--ring) }
+
+/* ===== Graduação (componente custom) ===== */
+.belt-field input[readonly]{
+  padding-left: 46px; padding-right: 42px; cursor: default;
+}
+.belt-swatch{
+  position:absolute; left:10px; top:50%; translate: 0 -50%;
+  width:24px; height:24px; border-radius:50%;
+  background: radial-gradient(circle at 30% 30%, var(--belt-color,#e5e7eb), #ffffff 60%);
+  border:1px solid rgba(0,0,0,.08);
+  box-shadow: inset 0 2px 4px rgba(0,0,0,.08), 0 0 0 3px rgba(255,255,255,.45);
+  transition: background .25s ease, box-shadow .25s ease, transform .2s ease;
+}
+.belt-field:hover .belt-swatch{ transform: scale(1.06) }
+
+.belt-toggle{
+  position:absolute; right:10px; top:50%; translate:0 -50%;
+  height:28px; padding:0 8px; border-radius:10px;
+  border:1px solid rgba(0,0,0,.08); background:#fff; cursor:pointer;
+}
+.belt-toggle:focus{ outline:none; box-shadow: 0 0 0 4px var(--ring) }
+
+/* lista custom da graduação */
+.belt-list{
+  position:absolute; left:0; right:0; top: calc(100% + 6px);
+  background:#fff; border:1px solid rgba(0,0,0,.08); border-radius:14px;
+  box-shadow: 0 20px 40px rgba(0,0,0,.16);
+  padding:6px; margin:0; list-style:none; display:none; z-index: 20;
+  max-height: 260px; overflow:auto;
+}
+.belt-field.open .belt-list{ display:block; }
+
+.belt-list li{
+  display:flex; align-items:center; gap:10px;
+  padding:8px 10px; border-radius:10px; cursor:pointer;
+  transition: background .15s ease;
+}
+.belt-list li:hover{ background: #f3f4f6; }
+.belt-list .dot{
+  --c:#e5e7eb;
+  width:18px; height:18px; border-radius:50%;
+  background: radial-gradient(circle at 30% 30%, var(--c), #ffffff 60%);
+  border:1px solid rgba(0,0,0,.08);
+}
+
+/* States de erro */
+.is-invalid{ border-color:#ef4444 !important; box-shadow: 0 0 0 4px rgba(239,68,68,.18) !important; }
+
+/* =========================
+   Ações
+   ========================= */
+.actions{ display:flex; gap:12px; margin-top: 6px; flex-wrap:wrap; }
+.btn-primary, .btn-secondary{
+  appearance:none; border:0; height:46px; padding: 0 18px; border-radius: 14px;
+  font-weight:700; cursor:pointer; transition: transform .1s ease, box-shadow .2s ease, background .2s ease;
+}
+.btn-primary{
+  background: linear-gradient(180deg, var(--red), var(--red-acc));
+  color:#fff; box-shadow: 0 10px 24px rgba(225,0,0,.22);
+}
+.btn-primary:hover{ transform: translateY(-1px) }
+.btn-primary:active{ transform: translateY(0) }
+
+.btn-secondary{
+  background:#fff; color: var(--text);
+  border:1px solid rgba(0,0,0,.1);
+}
+.btn-secondary[disabled]{ opacity:.6; cursor:not-allowed }
+
+/* =========================
+   Mensagens
+   ========================= */
+.form-msg{ min-height: 22px; font-size:.95rem; color: var(--muted); margin-top: 6px; }
+
+/* ===== CENTRALIZAÇÃO ABSOLUTA DO FORM ===== */
+/* Mantém o cartão exatamente no centro da viewport e não deixa sobrar espaço
+   acima/abaixo. As lutadoras continuam no fundo (fixas). */
+
+.inscricoes-page{
+  min-height: 100dvh;            /* usa altura da janela, já com barras/teclado móveis */
+  overflow: hidden;              /* impede rolagem quando couber na tela */
+}
+
+.container{
+  /* zera as margens anteriores e centraliza o conteúdo */
+  margin: 0 auto !important;
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;           /* centraliza H e V */
+  padding: 0 16px;               /* só respiro lateral */
+}
+
+.glass-card{
+  margin: 0 !important;          /* garante sem gap extra */
+  max-width: 940px;              /* limite confortável dentro do container */
+  width: 100%;
+}
+
+/* O fundo com as lutadoras já é fixo, garantimos sem overflow */
+.enroll-hero{ position: fixed; inset: 0; overflow: hidden; z-index: -1; }
+
+/* ===== Salvaguarda para telas pequenas =====
+   Se a tela for muito baixa, liberamos rolagem e
+   ancoramos o card próximo ao topo para não cortar conteúdo. */
+@media (max-height: 700px){
+  .inscricoes-page{ overflow: auto; }
+  .container{
+    min-height: auto;
+    align-content: start;        /* ancora no topo */
+    padding: 16px;               /* um respiro mínimo */
+  }
+}
