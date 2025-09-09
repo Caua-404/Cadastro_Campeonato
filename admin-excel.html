@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Gerador de Excel — Karatê Shotokan</title>
+
+  <!-- CSS do painel -->
+  <link rel="stylesheet" href="css/admin.css" />
+  <!-- (opcional) suas fontes do site -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Sawarabi+Mincho&family=Noto+Serif+JP:wght@400;700&display=swap" rel="stylesheet">
+
+  <!-- Bibliotecas -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.19.3/dist/xlsx.full.min.js" defer></script>
+
+  <!-- Worker do pdf.js -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      if (window.pdfjsLib && !pdfjsLib.GlobalWorkerOptions.workerSrc) {
+        pdfjsLib.GlobalWorkerOptions.workerSrc =
+          'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      }
+    });
+  </script>
+</head>
+<body class="admin">
+  <header class="top">
+    <h1>Gerador de Excel — Karatê Shotokan</h1>
+    <div class="right">
+      <span class="who">• Logado como: <span id="who">—</span></span>
+      <a class="logout" href="login.html" id="logoutBtn">Sair</a>
+    </div>
+  </header>
+
+  <main class="main">
+    <!-- Marca d’água opcional (se quiser a logo gigante, use esta linha e deixe o CSS cuidar) -->
+    <!-- <img class="brand-watermark" src="assets/shotokan-logo.png" alt="" aria-hidden="true"> -->
+
+    <!-- ===== Arquivos ===== -->
+    <h2 class="section-title">Arquivos (PDFs)</h2>
+    <div id="drop" class="dropzone">
+      <p>Arraste seus <b>PDFs</b> aqui</p>
+      <p>ou</p>
+      <label class="btn">
+        Selecionar PDFs
+        <input id="fileInput" type="file" accept="application/pdf" multiple>
+      </label>
+    </div>
+
+    <div class="counts">
+      <span id="countAll" class="badge">0</span>
+      <span id="countOk"  class="badge">0</span>
+      <span id="countDup" class="badge">0</span>
+      <span id="countErr" class="badge">0</span>
+    </div>
+    <div id="log" class="muted" style="margin-top:8px"></div>
+
+    <!-- ===== Colunas ===== -->
+    <h2 class="section-title">Colunas</h2>
+    <div id="cols"></div>
+    <div class="export-actions">
+      <button id="btnExport" class="btn-primary" type="button">Baixar planilha</button>
+    </div>
+
+    <!-- ===== Prévia ===== -->
+    <h2 class="section-title">Prévia (sem duplicatas)</h2>
+    <div class="table-wrap">
+      <table id="preview">
+        <thead></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <p class="caption">A prévia reflete as <b>colunas selecionadas</b> e <b>exclui duplicatas</b> por nome completo.</p>
+
+    <!-- ===== Duplicatas ===== -->
+    <h2 class="section-title">Duplicatas</h2>
+    <div class="table-wrap">
+      <table id="dups">
+        <thead></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <p class="caption">Registros com <b>nome completo</b> repetido em quaisquer PDFs enviados. Estes <b>não</b> entram no Excel.</p>
+  </main>
+
+  <!-- Seu script (idêntico ao que você colou, só mantive aqui) -->
+  <script>
+  (() => {
+    'use strict';
+    if (sessionStorage.getItem('shotokan_auth') !== 'ok') {
+      location.replace('login.html'); return;
+    }
+    const who = document.getElementById('who');
+    const whoUser = sessionStorage.getItem('shotokan_user') || '';
+    if (who && whoUser) who.textContent = whoUser;
+    document.getElementById('logoutBtn')?.addEventListener('click', () => {
+      sessionStorage.removeItem('shotokan_auth');
+      sessionStorage.removeItem('shotokan_user');
+    });
+
+    // worker garantia (caso o DOMContentLoaded acima não aconteça por ordem)
+    if (window.pdfjsLib && !pdfjsLib.GlobalWorkerOptions.workerSrc) {
+      pdfjsLib.GlobalWorkerOptions.workerSrc =
+        'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    }
+
+    const ALL_FIELDS = [
+      ['nome','Nome'],
+      ['sexo','Sexo'],
+      ['data_nascimento','Data de Nascimento'],
+      ['idade','Idade'],
+      ['graduacao','Graduação'],
+      ['cidade','Cidade'],
+      ['uf','UF'],
+      ['telefone','Telefone'],
+      ['email','Email'],
+      ['campeonato','Campeonato'],
+      ['federacao','Federação'],
+      ['data_evento','Data do Evento'],
+      ['local_evento','Local do Evento'],
+      ['cidade_evento','Cidade do Evento'],
+      ['uf_evento','UF do Evento'],
+    ];
+    const DEFAULT_SELECTED = new Set([
+      'nome','sexo','data_nascimento','idade','graduacao','cidade','uf',
+      'telefone','email','campeonato','federacao','data_evento','local_evento',
+      'cidade_evento','uf_evento'
+    ]);
+
+    let parsedRows=[], duplicateRows=[], errorFiles=[], selectedCols=new Set([...DEFAULT_SELECTED]), seenNames=new Set();
+
+    const normalizeName = s => (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toUpperCase();
+    const el = {
+      cols: cols, preview: preview, dups: dups,
+      countAll: countAll, countOk: countOk, countDup: countDup, countErr: countErr,
+      log: log, drop: drop, fileInput: fileInput, btnExport: btnExport
+    };
+
+    function setCounts(total){ countAll.textContent=String(total); countOk.textContent=String(parsedRows.length); countDup.textContent=String(duplicateRows.length); countErr.textContent=String(errorFiles.length); }
+    function logHtml(h){ log.innerHTML=h; }
+
+    function renderColumnsUI(){
+      el.cols.innerHTML='';
+      for (const [key,label] of ALL_FIELDS){
+        const id='col_'+key;
+        const wrap=document.createElement('label');
+        wrap.innerHTML = `<input type="checkbox" id="${id}" ${selectedCols.has(key)?'checked':''}/> <span>${label}</span>`;
+        el.cols.appendChild(wrap);
+        wrap.querySelector('input').addEventListener('change',e=>{
+          if(e.target.checked) selectedCols.add(key); else selectedCols.delete(key);
+          renderPreview();
+        });
+      }
+    }
+
+    function renderTable(tableEl, rows, colsSet){
+      const thead=tableEl.querySelector('thead'), tbody=tableEl.querySelector('tbody');
+      thead.innerHTML=''; tbody.innerHTML='';
+      const trh=document.createElement('tr');
+      for(const [key,label] of ALL_FIELDS){ if(!colsSet.has(key)) continue; const th=document.createElement('th'); th.textContent=label; trh.appendChild(th); }
+      thead.appendChild(trh);
+      for(const r of rows){
+        const tr=document.createElement('tr');
+        for(const [key] of ALL_FIELDS){ if(!colsSet.has(key)) continue; const td=document.createElement('td'); td.textContent=r[key]??''; tr.appendChild(td); }
+        tbody.appendChild(tr);
+      }
+    }
+    function renderPreview(){
+      renderTable(el.preview, parsedRows, selectedCols);
+      const thead=el.dups.querySelector('thead'), tbody=el.dups.querySelector('tbody'); thead.innerHTML=''; tbody.innerHTML='';
+      const trh=document.createElement('tr'); for(const h of ['Nome','Data de Nasc.','Campeonato','Arquivo']){ const th=document.createElement('th'); th.textContent=h; trh.appendChild(th); } thead.appendChild(trh);
+      for(const r of duplicateRows){ const tr=document.createElement('tr'); for(const v of [r.nome||'', r.data_nascimento||'', r.campeonato||'', r._file||'']){ const td=document.createElement('td'); td.textContent=v; tr.appendChild(td); } tbody.appendChild(tr); }
+    }
+
+    function cleanText(text){
+      return (text||'')
+        .replace(/Informações do Atleta/gi,' ')
+        .replace(/Informações do Campeonato/gi,' ')
+        .replace(/Ficha de Inscrição/gi,' ')
+        .replace(/Karat[eê]\s+Shotokan/gi,' ')
+        .replace(/Declaro[\s\S]*?(?=(?:Atleta\b|Mestre\s+Respons[aá]vel\b|Assinaturas?\b|$))/gi,' ')
+        .replace(/\s+/g,' ').trim();
+    }
+    const NEXT_LABELS='(?:ATLETA:|GRADUAÇÃO:|Sexo:|Data\\s+de\\s+Nascimento:|Idade:|Cidade:|UF:|Telefone:|Email:|Campeonato:|Federação:|Data:|Local:|Cidade\\s*\\/\\s*UF:|Declaro\\b|Assinaturas?|Assinatura\\b|Atleta\\b|Mestre\\s+Respons[aá]vel)';
+    function rxStop(labelRe, s){ const re=new RegExp(labelRe.source+'\\s*(.+?)\\s*(?=\\s+'+NEXT_LABELS+'|$)','i'); const m=re.exec(s); return m?m[1].trim():''; }
+    const rx=(re,s)=>{ const m=re.exec(s); return m?m[1].trim():''; };
+
+    function extractFieldsFromText(rawText, filename){
+      const text=cleanText(rawText);
+      const nome=rxStop(/ATLETA:/i,text);
+      const graduacao=rxStop(/GRADUAÇÃO:/i,text);
+      let sexo=rx(/Sexo:\s*(Masculino|Feminino|Outro|Prefiro não dizer)\b/i,text); if(!sexo) sexo=rxStop(/Sexo:/i,text);
+      const data_nascimento=rx(/Data\s+de\s+Nascimento:\s*(\d{2}\/\d{2}\/\d{4})/i,text);
+      const idade=rx(/Idade:\s*(\d{1,3})\b/i,text);
+      const cidade=rxStop(/Cidade:/i,text);
+      const uf=rx(/UF:\s*([A-Z]{2})\b/i,text);
+      const telefone=rx(/Telefone:\s*([0-9()+\-.\s]+)/i,text);
+      const email=rx(/Email:\s*([^\s]+@[^\s]+)\b/i,text);
+      const campeonato=rxStop(/Campeonato:/i,text);
+      const federacao=rxStop(/Federação:/i,text);
+      const data_evento=rxStop(/Data:/i,text);
+      const local_evento=rxStop(/Local:/i,text).replace(/\s*Cidade\s*\/\s*$/i,'').trim();
+      let cidade_evento='', uf_evento='';
+      const mEv=/Cidade\s*\/\s*UF:\s*([A-Za-zÀ-ÿ'´`^~ ]+?)\s*[-–—]\s*([A-Za-z]{2})\b/i.exec(text);
+      if(mEv){ cidade_evento=mEv[1].trim(); uf_evento=mEv[2].trim(); }
+      else{
+        const comb=rxStop(/Cidade\s*\/\s*UF:/i,text);
+        const m2=/(.+?)\s*[-–—]\s*([A-Za-z]{2})\b/.exec(comb);
+        if(m2){ cidade_evento=m2[1].trim(); uf_evento=m2[2].trim(); } else { cidade_evento=comb.trim(); uf_evento=''; }
+      }
+      const row={ nome,sexo,data_nascimento,idade,graduacao,cidade,uf,telefone,email,campeonato,federacao,data_evento,local_evento,cidade_evento,uf_evento,_file:filename };
+      for(const k of Object.keys(row)) if(row[k]===undefined) row[k]='';
+      return row;
+    }
+
+    async function parsePdfFile(file){
+      const url=URL.createObjectURL(file);
+      try{
+        const pdf=await pdfjsLib.getDocument({url}).promise;
+        let text=''; for(let p=1;p<=pdf.numPages;p++){ const page=await pdf.getPage(p); const content=await page.getTextContent(); const s=content.items.map(it=>it.str).join(' '); text+=' '+s; }
+        URL.revokeObjectURL(url);
+        text=text.replace(/\s+/g,' ').trim();
+        return extractFieldsFromText(text,file.name);
+      }catch(err){ URL.revokeObjectURL(url); throw err; }
+    }
+
+    const prevent=e=>{ e.preventDefault(); e.stopPropagation(); };
+    ['dragenter','dragover'].forEach(ev=> drop.addEventListener(ev,e=>{ prevent(e); drop.classList.add('dragover'); }));
+    ['dragleave','drop'].forEach(ev=> drop.addEventListener(ev,e=>{ prevent(e); drop.classList.remove('dragover'); }));
+
+    drop.addEventListener('drop', e=>{ const files=[...(e.dataTransfer?.files||[])]; if(files.length) handleFiles(files); });
+    fileInput.addEventListener('change', e=>{ const files=[...(e.target.files||[])]; if(files.length) handleFiles(files); fileInput.value=''; });
+
+    async function handleFiles(files){
+      const pdfs=files.filter(f=>f.type==='application/pdf');
+      parsedRows=[]; duplicateRows=[]; errorFiles=[]; seenNames=new Set();
+      logHtml('Lendo PDFs…');
+      for(const file of pdfs){
+        try{
+          const row=await parsePdfFile(file);
+          const key=normalizeName(row.nome);
+          if(!key){ errorFiles.push({file:file.name,motivo:'Nome vazio'}); continue; }
+          if(seenNames.has(key)) duplicateRows.push(row); else { seenNames.add(key); parsedRows.push(row); }
+        }catch(err){ console.error('Erro em', file.name, err); errorFiles.push({file:file.name,motivo:String(err?.message||err)}); }
+      }
+      setCounts(pdfs.length);
+      logHtml(`<span class="ok">OK:</span> ${parsedRows.length} • <span class="warn">Duplicatas:</span> ${duplicateRows.length} • Erros: ${errorFiles.length}`);
+      renderColumnsUI(); renderPreview();
+    }
+
+    function colLetter(n){ let s=''; while(n>0){ const m=(n-1)%26; s=String.fromCharCode(65+m)+s; n=Math.floor((n-1)/26);} return s; }
+
+    async function exportExcelJS(){
+      const wb=new ExcelJS.Workbook();
+      const ws=wb.addWorksheet('Inscricoes',{properties:{tabColor:{argb:'FFE10000'}}});
+      const cols=[], keys=[];
+      for(const [key,label] of ALL_FIELDS){ if(selectedCols.has(key)){ cols.push({header:label,key,width:Math.max(14,label.length+4)}); keys.push(key); } }
+      ws.columns=cols;
+      const hdr=ws.getRow(1); hdr.font={bold:true,color:{argb:'FFFFFFFF'}}; hdr.alignment={vertical:'middle',horizontal:'center'}; hdr.height=22;
+      hdr.eachCell(cell=>{ cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFE10000'}}; cell.border={top:{style:'thin',color:{argb:'FFB0B0B0'}},left:{style:'thin',color:{argb:'FFB0B0B0'}},right:{style:'thin',color:{argb:'FFB0B0B0'}},bottom:{style:'thin',color:{argb:'FFB0B0B0'}}}; });
+
+      for(const r of parsedRows){
+        const row={}; for(const k of keys) row[k]=r[k]??'';
+        if(row.data_nascimento && /^\d{2}\/\d{2}\/\d{4}$/.test(row.data_nascimento)){ const [dd,mm,yyyy]=row.data_nascimento.split('/').map(Number); row.data_nascimento=new Date(yyyy,mm-1,dd); }
+        if(row.idade && !isNaN(Number(row.idade))) row.idade=Number(row.idade);
+        ws.addRow(row);
+      }
+      const dateCol=cols.findIndex(c=>c.key==='data_nascimento')+1;
+      if(dateCol>0){ for(let i=2;i<=ws.rowCount;i++){ const c=ws.getCell(i,dateCol); if(c.value instanceof Date) c.numFmt='dd/mm/yyyy'; } }
+      for(let i=2;i<=ws.rowCount;i++){ const row=ws.getRow(i); row.eachCell(cell=>{ if(i%2===0) cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFF7F7F7'}}; cell.border={top:{style:'hair',color:{argb:'FFDDDDDD'}},left:{style:'hair',color:{argb:'FFDDDDDD'}},right:{style:'hair',color:{argb:'FFDDDDDD'}},bottom:{style:'hair',color:{argb:'FFDDDDDD'}}}; cell.alignment={vertical:'middle'}; }); }
+      ws.views=[{state:'frozen',xSplit:0,ySplit:1}]; const lastCol=colLetter(cols.length||1); ws.autoFilter={from:'A1',to:`${lastCol}1`};
+      const buf=await wb.xlsx.writeBuffer();
+      const blob=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+      const d=new Date(), pad=n=>String(n).padStart(2,'0');
+      const fname=`inscricoes-${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}.xlsx`;
+      const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=fname; a.click(); URL.revokeObjectURL(a.href);
+    }
+    function rowsToSheet(rows, colsSet){
+      const headers=[], keys=[]; for(const [key,label] of ALL_FIELDS){ if(colsSet.has(key)){ headers.push(label); keys.push(key); } }
+      const data=[headers]; for(const r of rows){ data.push(keys.map(k=>r[k]??'')); }
+      const ws=XLSX.utils.aoa_to_sheet(data); ws['!cols']=headers.map(h=>({wch:Math.max(12,h.length+2)})); return ws;
+    }
+    function exportFallback(){
+      if(window.XLSX && XLSX.utils && XLSX.writeFile){ const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, rowsToSheet(parsedRows, selectedCols), 'Inscricoes'); const d=new Date(),pad=n=>String(n).padStart(2,'0'); XLSX.writeFile(wb,`inscricoes-${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}.xlsx`); return; }
+      const headers=[],keys=[]; for(const [key,label] of ALL_FIELDS){ if(selectedCols.has(key)){ headers.push(`"${label}"`); keys.push(key); } }
+      const lines=[headers.join(',')]; for(const r of parsedRows){ lines.push(keys.map(k=>`"${String(r[k]??'').replace(/"/g,'""')}"`).join(',')); }
+      const blob=new Blob([lines.join('\r\n')],{type:'text/csv;charset=utf-8;'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='inscricoes.csv'; a.click(); URL.revokeObjectURL(url);
+    }
+    function exportPlanilha(){ if(!parsedRows.length){ alert('Nenhum registro válido para exportar.'); return; } if(window.ExcelJS){ exportExcelJS().catch(err=>{ console.error('ExcelJS falhou:',err); exportFallback(); }); } else { exportFallback(); } }
+    btnExport?.addEventListener('click', exportPlanilha);
+
+    renderColumnsUI(); renderPreview(); setCounts(0);
+  })();
+  </script>
+</body>
+</html>

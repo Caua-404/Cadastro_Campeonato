@@ -1,14 +1,32 @@
 /* ============================================
-   PDF do Atleta — Karatê Shotokan
-   - Watermark ao centro
+   PDF do Atleta — Karatê Shotokan + WhatsApp Share
+   - Watermark central
    - Seções fortes (vermelho institucional + bold)
-   - Rodapé: esquerda/centro/direita
-   - Sem QR e sem ID
-   - Assinaturas mais abaixo
-   - ✅ Recalcula idade via DD/MM/AAAA (garante menor/maior)
+   - Rodapé: bandeira/logos
+   - Recalcula idade via DD/MM/AAAA
+   - Nome do arquivo baseado no atleta
+   - Envio para WhatsApp:
+       * Mobile (Web Share API): anexa o PDF + texto
+       * Desktop (fallback): abre WhatsApp com texto e baixa o PDF
    ============================================ */
 (() => {
   'use strict';
+
+  // ================== CONFIG WHATSAPP ==================
+  // Coloque aqui o número de destino COM DDI e DDD, só dígitos (ex.: 5591987654321).
+  // Deixe vazio ('') para abrir o WhatsApp pedindo que o usuário escolha o contato (mobile).
+  // ================== CONFIG WHATSAPP ==================
+  const WHATSAPP_NUMBER = '559492647476'; // +55 94 9264-7476 (somente dígitos p/ wa.me)
+
+
+  // Texto da mensagem enviada
+  function buildWhatsAppMessage(formData, tituloEvento) {
+    const nome = (formData?.nome || '').trim();
+    const evento = (tituloEvento || formData?.campeonato || '').trim();
+    return `Olá, meu nome é ${nome} e aqui está o meu PDF de inscrição para o ${evento}.`;
+  }
+
+  // =====================================================
 
   try {
     if (window.pdfMake && window.pdfFonts && window.pdfFonts.pdfMake && !window.pdfMake.vfs) {
@@ -16,6 +34,7 @@
     }
   } catch(_) {}
 
+  // utils
   const toDataURL = async (src) => {
     if (!src) return null;
     try {
@@ -29,25 +48,26 @@
       });
     } catch { return null; }
   };
-
   const beltColorHex = (fx) => {
     const map = {
       'Branca':  '#f1f5f9',
-      'Amarela': '#fef08a',
-      'Vermelha':'#E10000',
-      'Laranja': '#f59e0b',
-      'Verde':   '#34d399',
-      'Roxa':    '#a78bfa',
+      'Amarela': '#ffe66a',
+      'Vermelha':'#ff2a2a',
+      'Laranja': '#ff9d1a',
+      'Verde':   '#18c97a',
+      'Roxa':    '#9b7bff',
       'Marrom':  '#a16207',
       'Preta':   '#111111'
     };
     return map[fx] || '#e5e7eb';
   };
-
   const normalize = (s) => (s || '').trim();
   const toUpperNoAcc = (s='') => s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase();
+  const toFileSlug = (s='atleta') =>
+    s.normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+     .replace(/[^a-zA-Z0-9]+/g,'-').replace(/^-+|-+$/g,'').toLowerCase();
 
-  // --- Helpers de data (PDF independente do formulário)
+  // datas
   function parseBRDate(s) {
     const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(s || '');
     if (!m) return null;
@@ -63,6 +83,7 @@
     return a;
   }
 
+  // título de seção
   function sectionTitle(text, colorPrim){
     return {
       table: {
@@ -70,19 +91,27 @@
         body: [[{
           text,
           bold: true,
-          fontSize: 12,
+          fontSize: 13,
           color: '#111111',
           fillColor: colorPrim,
           margin: [10,7,10,7]
         }]]
       },
       layout: 'noBorders',
-      margin: [0, 12, 0, 8]
+      margin: [0, 14, 0, 8]
     };
   }
 
+  // dados fixos do campeonato
+  const EVENTO_FIXO = {
+    datas:  '27 e 28 de setembro',
+    local:  'Ginásio Poliesportivo',
+    cidade: 'Itupiranga',
+    uf:     'PA'
+  };
+
   async function buildDocDef(data) {
-    const COR = { prim: '#E10000', texto: '#111', bgClaro: '#EEECEC' };
+    const COR = { prim: '#D50000', texto: '#111', bgClaro: '#EEECEC' };
 
     // imagens
     const logoShotokan = await toDataURL('assets/shotokan-logo.png');
@@ -90,7 +119,7 @@
     const logoAgape    = await toDataURL('assets/logo-agape.png');
     const logoFed      = await toDataURL('assets/logo-federacao.png');
 
-    // calcular idade a partir da data de nascimento (fallback para idade_atual)
+    // idade
     const birthPdf    = parseBRDate(data.data_nascimento);
     const ageComputed = ageOn(birthPdf);
     const idadeShow   = (ageComputed != null) ? ageComputed
@@ -206,7 +235,7 @@
             [
               { text: `Sexo: ${data.sexo}` },
               { text: `Data de Nascimento: ${data.data_nascimento}` },
-              { text: `Idade: ${idadeShow} anos` }   // <-- usa idade recalculada
+              { text: `Idade: ${idadeShow} anos` }
             ],
             [
               { text: `Cidade: ${data.cidade}` },
@@ -226,7 +255,11 @@
               { text: `Campeonato: ${tituloEvento}` },
               { text: `Federação: ${federacao}` }
             ],
-            [ { text: '' }, { text: '' } ]
+            [
+              { text: `Data: ${EVENTO_FIXO.datas}` },
+              { text: `Local: ${EVENTO_FIXO.local}` },
+              { text: `Cidade/UF: ${EVENTO_FIXO.cidade} - ${EVENTO_FIXO.uf}` }
+            ]
           ],
           columnGap: 18, margin: [0,2,0,4]
         },
@@ -275,65 +308,51 @@
     };
   }
 
-  function openPdfRobust(pdfDoc, filename='ficha-atleta.pdf'){
-    const popup = window.open('', 'Ficha_Atleta', 'noopener,noreferrer');
-    if (!popup) { pdfDoc.download(filename); return; }
-    try {
-      popup.document.open();
-      popup.document.write(`
-        <!doctype html><html lang="pt-br"><head>
-          <meta charset="utf-8" />
-          <title>Gerando PDF…</title>
-          <style>
-            html,body{height:100%;margin:0}
-            body{display:flex;align-items:center;justify-content:center;background:#f5f5f5;color:#333;font-family:system-ui,Segoe UI,Roboto,Arial}
-            .wrap{text-align:center}
-            .spinner{width:48px;height:48px;border:4px solid #e5e7eb;border-top-color:#e10000;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 12px}
-            @keyframes spin{to{transform:rotate(360deg)}}
-            iframe{border:0;width:100%;height:100%;display:none}
-          </style>
-        </head><body>
-          <div class="wrap">
-            <div class="spinner"></div>
-            <div>Gerando a Ficha do Atleta…</div>
-          </div>
-          <iframe id="pdfFrame" title="Ficha do Atleta"></iframe>
-        </body></html>
-      `);
-      popup.document.close();
-    } catch (_) {}
-
-    pdfDoc.getDataUrl((dataUrl) => {
-      try {
-        const iframe = popup.document.getElementById('pdfFrame');
-        if (iframe) {
-          iframe.src = dataUrl;
-          const wrap = popup.document.querySelector('.wrap');
-          if (wrap) wrap.style.display = 'none';
-          iframe.style.display = 'block';
-        } else {
-          popup.location.href = dataUrl;
-        }
-      } catch (err) {
-        console.warn('Falha ao exibir no popup. Baixando…', err);
-        pdfDoc.download(filename);
-        try { popup.close(); } catch {}
-      }
-    });
-  }
-
+  // Geração + envio WhatsApp
   window.generateAthletePDF = async function generateAthletePDF(formData){
     try {
       if (window.pdfMake && window.pdfFonts && window.pdfFonts.pdfMake && !window.pdfMake.vfs) {
         window.pdfMake.vfs = window.pdfFonts.pdfMake.vfs;
       }
       if (!window.pdfMake || !window.pdfMake.createPdf) throw new Error('Biblioteca do PDF (pdfMake) não carregada.');
+
       const docDef = await buildDocDef(formData || {});
       const pdfDoc = window.pdfMake.createPdf(docDef);
-      openPdfRobust(pdfDoc, 'ficha-atleta.pdf');
+
+      const tituloEvento = normalize(formData?.campeonato) || 'CAMPEONATO DE KARATÊ';
+      const fname = 'ficha-' + toFileSlug(formData?.nome || 'atleta') + '.pdf';
+      const message = buildWhatsAppMessage(formData, tituloEvento);
+
+      // Tenta compartilhar com arquivo (mobile)
+      pdfDoc.getBlob(async (blob) => {
+        const file = new File([blob], fname, { type: 'application/pdf' });
+
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({
+              files: [file],
+              text: message,
+              title: fname
+            });
+            // Compartilhado com sucesso; nada mais a fazer.
+            return;
+          } catch (err) {
+            console.warn('Share cancelado/negado, aplicando fallback…', err);
+          }
+        }
+
+        // Fallback (desktop): baixar PDF e abrir WhatsApp com mensagem
+        try { pdfDoc.download(fname); } catch {}
+        const msg = encodeURIComponent(message);
+        const waUrl = WHATSAPP_NUMBER
+          ? `https://wa.me/${WHATSAPP_NUMBER}?text=${msg}`
+          : `https://wa.me/?text=${msg}`;
+        window.open(waUrl, '_blank', 'noopener,noreferrer');
+      });
+
     } catch (err) {
-      console.error('[PDF] Erro ao gerar:', err);
-      alert('Erro ao gerar PDF: ' + (err?.message || err));
+      console.error('[PDF] Erro ao gerar/compartilhar:', err);
+      alert('Erro ao gerar/compartilhar PDF: ' + (err?.message || err));
       try {
         const minimal = { content: [{ text: 'Teste de PDF — Karatê Shotokan', fontSize: 16 }] };
         window.pdfMake.createPdf(minimal).download('teste-minimo.pdf');

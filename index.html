@@ -64,10 +64,10 @@
 
           <div class="field">
             <label class="sr-only" for="sexo">Sexo</label>
-            <select id="sexo" required>
+            <select id="sexo" required aria-label="Sexo">
               <option value="" disabled selected>Sexo</option>
-              <option>F</option>
-              <option>M</option>
+              <option>Masculino</option>
+              <option>Feminino</option>
               <option>Outro</option>
               <option>Prefiro não dizer</option>
             </select>
@@ -139,8 +139,16 @@
 
         <!-- Ações (PDF desativado) -->
         <div class="actions">
-          <button type="submit" class="btn-primary">Salvar</button>
-          <button type="button" id="btnPdf" class="btn-secondary">Gerar PDF</button>
+          <button type="submit" class="btn-primary" hidden>Enviar inscrição</button>
+
+          <button type="button" id="btnPdf" class="btn-secondary btn-elegant">
+            Gerar PDF (Ficha do Atleta)
+          </button>
+
+          <!-- Botão de acesso à área de login/admin -->
+          <a href="login.html" class="btn-admin" id="btnAdmin" aria-label="Acessar área restrita">
+            Área restrita
+          </a>
         </div>
 
         <p id="formMsg" class="form-msg" role="status" aria-live="polite"></p>

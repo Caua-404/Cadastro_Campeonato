@@ -230,3 +230,43 @@ body{
     padding: 16px;               /* um respiro mínimo */
   }
 }
+
+/* === Botão Área restrita (ghost) === */
+.actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;   /* centraliza os botões, como você pediu */
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.btn-admin {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.28);
+  background: rgba(0,0,0,.15);       /* vidro levinho */
+  color: #fff;
+  font-weight: 700;
+  letter-spacing: .2px;
+  text-decoration: none;
+  backdrop-filter: blur(6px);
+  transition: border-color .2s, box-shadow .2s, transform .08s, background .2s;
+}
+
+.btn-admin:hover {
+  border-color: #D50000;              /* vermelho institucional mais vivo */
+  box-shadow: 0 8px 24px rgba(213,0,0,.28);
+  background: rgba(213,0,0,.18);
+}
+
+.btn-admin:active {
+  transform: translateY(1px);
+}
+
+/* Não imprimir o botão */
+@media print {
+  .btn-admin { display: none !important; }
+}

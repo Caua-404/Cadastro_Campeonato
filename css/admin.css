@@ -1,0 +1,312 @@
+/* ====== admin.css (Painel) ===================================== */
+:root{
+  /* Cores da marca */
+  --brand-red: #E10000;
+  --brand-red-700: #C20000;
+  --brand-red-800: #A40000;
+  --ring: rgba(225,0,0,.35);
+
+  /* Tema escuro do painel */
+  --bg: #0f1117;
+  --panel: #151821;
+  --panel-2: #1a1f2b;
+  --line: #232734;
+  --muted: #9aa3b2;
+  --text: #e7eaf1;
+
+  /* Tipografia / dimensões */
+  --fs-12: 12px;
+  --fs-13: 13px;
+  --fs-16: 16px;
+  --radius: 12px;
+}
+
+*{ box-sizing:border-box; }
+html,body{ height:100%; }
+body.admin{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  accent-color: var(--brand-red);
+}
+
+/* ===== Topo ==================================================== */
+.top{
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+  padding:20px clamp(12px,2vw,24px);
+  border-bottom:1px solid var(--line);
+  background:linear-gradient(180deg,#181b26,#12141b);
+}
+.top h1{ margin:0; font-size:clamp(18px,2.2vw,22px); font-weight:800; letter-spacing:.2px; }
+.top .who{ color:var(--muted); font-size:var(--fs-12); }
+.top .right{ display:flex; align-items:center; gap:12px; }
+.logout{
+  color:#fff; text-decoration:none; font-weight:600;
+  padding:8px 12px; border:1px solid #ffffff26; border-radius:10px; background:#ffffff14;
+}
+
+/* ===== Container =============================================== */
+.main{ max-width:1200px; margin:24px auto; padding:0 16px; }
+
+/* ===== Títulos / seções ======================================== */
+h2.section-title{
+  margin:18px 0 10px;
+  font-size:clamp(16px,2vw,18px);
+  font-weight:800;
+}
+h2.section-title small{ color:var(--muted); font-weight:400; }
+
+/* ===== Cards de estatística ==================================== */
+.stats{
+  display:grid; grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:12px; margin:16px 0;
+}
+.stat{
+  background:var(--panel); border:1px solid var(--line);
+  border-radius:14px; padding:12px 14px; text-align:center;
+}
+.stat .n{ font-weight:800; font-size:20px; }
+.stat .lbl{ color:var(--muted); font-size:var(--fs-12); }
+
+/* ===== Dropzone ================================================= */
+.dropzone{
+  border:2px dashed #47506a; border-radius:14px;
+  padding:24px; text-align:center; background:var(--panel-2);
+}
+.dropzone.dragover{ border-color:var(--brand-red); background:#1a1f2b80; }
+.dropzone p{ margin:.4rem 0; color:var(--muted); }
+.dropzone input{ display:none; }
+
+/* ===== Contadores (badges) ===================================== */
+.counts{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin:.5rem 0 .75rem; }
+.badge{
+  display:inline-flex; align-items:center; gap:6px;
+  padding:6px 10px; border-radius:999px; font-size:var(--fs-12);
+  background:#1b2030; border:1px solid var(--line); color:#cfd6e6;
+}
+#countAll::before{ content:"Total:"; color:#9aa3b2; }
+#countOk::before{ content:"Válidos:"; color:#9aa3b2; }
+#countDup::before{ content:"Duplicatas:"; color:#9aa3b2; }
+#countErr::before{ content:"Erros:"; color:#9aa3b2; }
+
+/* ===== Seleção de colunas (GRID) ================================ */
+#cols{
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(220px, 1fr));
+  gap:12px;
+  align-items:stretch;
+}
+@media (max-width: 900px){ #cols{ grid-template-columns:repeat(auto-fill, minmax(200px,1fr)); } }
+@media (max-width: 560px){ #cols{ grid-template-columns:repeat(auto-fill, minmax(160px,1fr)); } }
+
+#cols label{
+  display:flex; align-items:center; gap:8px;
+  padding:12px 14px;
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:10px;
+  width:100%; user-select:none;
+  box-shadow: 0 1px 0 #00000020 inset;
+}
+#cols input[type="checkbox"]{ inline-size:18px; block-size:18px; }
+
+/* ===== Botão primário =========================================== */
+#btnExport, .btn-primary{
+  display:inline-flex; align-items:center; gap:.55rem;
+  padding:.85rem 1.25rem;
+  border:0; border-radius:999px;
+  background:linear-gradient(180deg,var(--brand-red) 0%, var(--brand-red-700) 100%);
+  color:#fff; font-weight:700; letter-spacing:.2px; cursor:pointer;
+  box-shadow:0 10px 20px rgba(0,0,0,.10), 0 2px 6px rgba(0,0,0,.12) inset;
+  transition: transform .12s ease, box-shadow .12s ease, filter .12s ease, background .2s ease;
+}
+#btnExport:hover{
+  filter:brightness(1.03);
+  box-shadow:0 12px 24px rgba(0,0,0,.14), 0 3px 8px rgba(255,255,255,.08) inset;
+}
+#btnExport:active{
+  transform:translateY(1px) scale(.99);
+  background:linear-gradient(180deg,var(--brand-red-700) 0%, var(--brand-red-800) 100%);
+}
+#btnExport:focus{
+  outline:none;
+  box-shadow:0 0 0 3px #fff, 0 0 0 6px var(--ring), 0 10px 20px rgba(0,0,0,.1);
+}
+#btnExport:disabled{ cursor:not-allowed; filter:grayscale(.2); opacity:.75; box-shadow:none; }
+#btnExport svg{ width:1.05rem; height:1.05rem; flex:0 0 auto; filter:drop-shadow(0 1px 0 rgba(0,0,0,.1)); }
+.export-actions{ display:flex; justify-content:center; margin:16px 0 8px; }
+
+/* ===== Tabelas ================================================== */
+.table-wrap{
+  overflow:auto; border:1px solid var(--line);
+  border-radius:var(--radius); background:var(--panel);
+}
+table{ width:100%; border-collapse:separate; border-spacing:0; }
+thead th{
+  position:sticky; top:0; z-index:1;
+  background:#202433; color:#cfd6e6;
+  text-align:left; font-weight:700; font-size:var(--fs-13);
+  padding:10px 12px; border-bottom:1px solid var(--line);
+}
+tbody td{ padding:10px 12px; border-bottom:1px solid #1e2230; }
+tbody tr:nth-child(even){ background:#171b25; }
+.caption{
+  margin:.45rem 0 .6rem; color:var(--muted); font-size:var(--fs-12);
+}
+
+/* ===== Inputs genéricos (se usar) =============================== */
+input[type="text"], input[type="email"]{
+  background:var(--panel);
+  border:1px solid var(--line);
+  color:var(--text);
+  padding:.6rem .75rem;
+  border-radius:10px;
+}
+input::placeholder{ color:#8c94a6; }
+
+/* ===== Responsivo =============================================== */
+@media (max-width: 900px){
+  .stats{ grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+@media (max-width: 560px){
+  .stats{ grid-template-columns:1fr 1fr; }
+  .top{ flex-wrap:wrap; row-gap:10px; }
+}
+
+/* ===== Print ==================================================== */
+@media print{
+  .dropzone, .actions, .export-actions, .logout{ display:none !important; }
+}
+
+/* ====== Ajustes finos do painel (overrides) ==================== */
+
+/* Header fixo e com leve blur */
+.top{
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+/* Container um pouco mais largo e com respiro */
+.main{ max-width: 1280px; }
+
+/* Títulos das seções */
+h2.section-title{
+  margin: 22px 0 12px;
+  font-weight: 800;
+  letter-spacing: .2px;
+}
+h2.section-title small{ color: var(--muted); }
+
+/* Dropzone + input arquivo */
+.dropzone{ margin-top: 8px; }
+.dropzone input[type="file"]::-webkit-file-upload-button{
+  background: #212636; border: 1px solid var(--line);
+  color: #cfd6e6; border-radius: 8px; padding: 6px 10px; cursor: pointer;
+}
+.dropzone input[type="file"]::file-selector-button{
+  background: #212636; border: 1px solid var(--line);
+  color: #cfd6e6; border-radius: 8px; padding: 6px 10px; cursor: pointer;
+}
+
+/* Linha de contadores (badges) */
+.counts{ margin: 10px 0 18px; gap: 8px; }
+.badge{
+  background:#1c2131; border:1px solid #2a2f42; color:#e1e6f3;
+  box-shadow: 0 1px 0 #0000001a inset; font-weight: 600;
+}
+
+/* Grid das Colunas (um pouco mais “solto”) */
+#cols{
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 12px;
+}
+@media (max-width: 1100px){ #cols{ grid-template-columns: repeat(auto-fill, minmax(210px,1fr)); } }
+@media (max-width: 800px){  #cols{ grid-template-columns: repeat(auto-fill, minmax(180px,1fr)); } }
+#cols label{
+  padding: 12px 14px;
+  box-shadow: 0 1px 0 #00000020 inset, 0 0 0 1px #0000;
+  transition: box-shadow .15s ease, transform .05s ease;
+}
+#cols label:hover{ box-shadow: 0 0 0 1px #ffffff10 inset; }
+#cols input[type="checkbox"]{ inline-size: 18px; block-size: 18px; }
+
+/* Ações (botão) centralizadas em telas menores */
+.export-actions{ justify-content: center; }
+
+/* Botão primário – micro polimento */
+#btnExport{ min-width: 200px; }
+
+/* Tabelas – cabeçalho mais legível e células com respiro */
+thead th{ letter-spacing: .15px; }
+tbody td{ white-space: nowrap; }
+
+/* Rodapé/observações sob tabelas */
+.caption{ margin: .6rem 0 1rem; }
+
+/* ===== Marca d’água (opcional) =====
+   Dê a classe .brand-watermark à imagem do tigre para não “empurrar” conteúdo.
+   <img class="brand-watermark" src="assets/shotokan-logo.png" alt="">
+*/
+.brand-watermark{
+  position: absolute;
+  top: 40px; left: 24px;
+  width: clamp(220px, 26vw, 380px);
+  opacity: .06;
+  pointer-events: none;
+  user-select: none;
+  filter: grayscale(1) contrast(1.2);
+  z-index: 0;
+}
+
+/* ===== Responsividade extra (polimento) ===== */
+
+/* Telas muito estreitas: dá mais respiro geral */
+@media (max-width: 420px){
+  .main { padding: 0 10px; }
+  .top h1 { font-size: 16px; }
+  .who { display: none; }            /* esconde "logado como" p/ caber melhor */
+  #btnExport { width: 100%; }        /* botão full-width */
+  .counts { justify-content: center; flex-wrap: wrap; gap: 6px; }
+  .dropzone p { margin: 6px 0; }
+}
+
+/* Colunas: mantêm 1–2 por linha com bom toque */
+@media (max-width: 900px){
+  #cols { grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); }
+}
+@media (max-width: 560px){
+  #cols { grid-template-columns: 1fr; }
+}
+
+/* Tabelas: texto um pouco menor, mantém cabeçalho legível */
+@media (max-width: 560px){
+  .table-wrap { border-radius: 10px; }
+  thead th { font-size: 12px; padding: 8px 10px; }
+  tbody td { font-size: 12px; padding: 8px 10px; }
+}
+
+/* Dropzone: botão ocupa a largura em mobile e fica mais “clicável” */
+.dropzone label.btn {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #212636;
+  cursor: pointer;
+}
+@media (max-width: 480px){
+  .dropzone label.btn { width: 100%; text-align: center; }
+}
+
+/* Marca d’água: não atrapalha em telas pequenas */
+@media (max-width: 700px){
+  .brand-watermark { display: none; }
+}
+
+/* Header: alinha melhor o bloco da direita em telas médias */
+.top .right { display: flex; align-items: center; gap: 10px; }

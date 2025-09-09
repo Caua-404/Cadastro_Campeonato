@@ -4,7 +4,7 @@
    - Máscaras (telefone, data)
    - Calendário nativo + máscara BR
    - Graduação com seletor custom (esfera colorida)
-   - Coletor unificado (para o PDF)
+   - Validação disparada no botão "Gerar PDF"
    ========================================================= */
 (() => {
   'use strict';
@@ -102,10 +102,8 @@
   });
   beltField?.style.setProperty('--belt-color', '#e5e7eb');
 
-  // validação e coleta
-  form?.addEventListener('submit', (e) => {
-    e.preventDefault();
-    msg.textContent = '';
+  // ---------- validação (reutilizável) ----------
+  function validateRequired() {
     let ok = true;
     const invalid = (el) => { el?.classList.add('is-invalid'); ok = false; };
     const valid   = (el) => el?.classList.remove('is-invalid');
@@ -132,17 +130,11 @@
     (!camp.value) ? invalid(camp) : valid(camp);
     (!fed.value)  ? invalid(fed)  : valid(fed);
 
-    if (!ok) { msg.textContent = 'Por favor, preencha todos os campos corretamente.'; return; }
+    msg.textContent = ok ? '' : 'Por favor, preencha todos os campos corretamente.';
+    return ok;
+  }
 
-    const idadeCalc = ageOn(d);
-    $('#idade_atual').value = (idadeCalc ?? '').toString();
-
-    const payload = collectFormData();
-    console.log('Dados prontos:', payload);
-    msg.textContent = 'Dados validados e salvos localmente.';
-    form.dataset.lastSaved = new Date().toISOString();
-  });
-
+  // coleta (para o PDF)
   function collectFormData(){
     const d = parseBRDate($('#data_nascimento').value);
     const idade = ageOn(d);
@@ -151,7 +143,7 @@
       campeonato: $('#campeonato').value || '',
       federacao:  $('#federacao').value || '',
       nome:       $('#nome').value || '',
-      sexo:       $('#sexo').value || '',
+      sexo:       $('#sexo').value || '',                // ex.: "Masculino"
       data_nascimento: $('#data_nascimento').value || '',
       idade_atual: $('#idade_atual').value || '',
       graduacao:  $('#graduacao').value || '',
@@ -161,10 +153,11 @@
       email:      $('#email').value || ''
     };
   }
-
   window.SHOTOKAN_COLLECT = collectFormData;
 
+  // botão PDF (valida e gera)
   document.getElementById('btnPdf')?.addEventListener('click', () => {
+    if (!validateRequired()) return;
     const data = window.SHOTOKAN_COLLECT?.() || {};
     window.generateAthletePDF?.(data);
   });

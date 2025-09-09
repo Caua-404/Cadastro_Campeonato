@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Login — Karatê Shotokan</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Sawarabi+Mincho&family=Noto+Serif+JP:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --prim:#D50000; --bg:#0c0d0f; --glass: rgba(255,255,255,.08); --muted:#b3b3b3;
+    }
+    *{box-sizing:border-box} html,body{height:100%}
+    body{
+      margin:0; font-family:system-ui,Segoe UI,Roboto,Arial; color:#fff; background: radial-gradient(1200px 800px at 20% 20%, #1a1a1a, #0c0d0f);
+      display:grid; place-items:center; padding:24px;
+    }
+    .wrap{width:100%; max-width:460px}
+    .card{
+      background:var(--glass); backdrop-filter: blur(14px); border:1px solid rgba(255,255,255,.08);
+      border-radius:22px; padding:28px 24px; box-shadow: 0 20px 60px rgba(0,0,0,.35);
+    }
+    .head{display:flex; gap:12px; align-items:center; margin-bottom:12px}
+    .head img{width:42px; height:42px}
+    h1{font:700 22px/1.2 "Noto Serif JP", serif; margin:0}
+    p.sub{color:var(--muted); margin:4px 0 18px}
+    .field{margin:10px 0}
+    .field input{
+      width:100%; padding:14px 14px; border-radius:14px; border:1px solid rgba(255,255,255,.12);
+      background:rgba(0,0,0,.25); color:#fff; outline:none; transition:.2s border, .2s box-shadow;
+    }
+    .field input:focus{border-color:var(--prim); box-shadow:0 0 0 3px rgba(213,0,0,.25)}
+    .btn{
+      width:100%; margin-top:12px; padding:14px 16px; border-radius:14px; border:none; cursor:pointer;
+      background:linear-gradient(135deg, #ff3b3b, #b70000); color:#fff; font-weight:700; letter-spacing:.3px;
+      box-shadow: 0 10px 30px rgba(213,0,0,.35); transition: transform .08s ease-in-out, filter .2s;
+    }
+    .btn:active{transform:translateY(1px)} .err{color:#ffb4b4; min-height:20px; margin-top:8px}
+    .foot{margin-top:14px; font-size:12px; color:#9aa}
+    .foot code{background:rgba(255,255,255,.08); padding:2px 6px; border-radius:6px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="head">
+        <img src="assets/shotokan-logo.png" alt="" />
+        <div>
+          <h1>Área Restrita</h1>
+          <p class="sub">Acessar a ferramenta de geração de Excel (importação de PDFs).</p>
+        </div>
+      </div>
+
+      <form id="loginForm" novalidate>
+        <div class="field">
+          <input type="text" id="user" placeholder="Usuário" autocomplete="username" required />
+        </div>
+        <div class="field">
+          <input type="password" id="pass" placeholder="Senha" autocomplete="current-password" required />
+        </div>
+        <button type="submit" class="btn">Entrar</button>
+        <div id="err" class="err"></div>
+      </form>
+      <div class="foot">Uso interno. Para suporte, contate o Sensei. Exemplo credenciais: <code>admin / agape2025</code></div>
+    </div>
+  </div>
+
+    <script>
+    // ==============================================
+    // Login simples (client-side) com SHA-256 + pepper
+    // Usuários: 
+    //  - wesley.melo / GreenBypass#2025
+    //  - riquelme.neres / BlackBysFirstDan%@2025
+    // ==============================================
+
+    // Lista de usuários: username (lowercase) + hash SHA-256 de `${username}:${password}|${PEPPER}`
+    const USERS = [
+        { u: 'wesley.melo',     h: '19294089d47a29f23a858422544315e3ed6b8d171e31c0696b6abbc614caaa72' },
+        { u: 'riquelme.neres',  h: '86c5060560d193a9a5fe51fcb4e410477d5314c67361ddb90416506fcb57b1be' },
+    ];
+    const PEPPER = 'ks-v1-pepper'; // “pimenta” só para evitar texto plano (não é segurança forte)
+
+    // Util: SHA-256 -> hex
+    async function sha256Hex(str) {
+        const enc = new TextEncoder().encode(str);
+        const buf = await crypto.subtle.digest('SHA-256', enc);
+        return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    // Tentativas e trava simples (anti-brute-force básico)
+    const MAX_ATTEMPTS = 5;
+    const LOCK_MS = 60_000; // 1 min
+    function getLockUntil() { return Number(localStorage.getItem('shotokan_lock_until') || 0); }
+    function setLock(msFromNow) { localStorage.setItem('shotokan_lock_until', String(Date.now() + msFromNow)); }
+    function clearLock() { localStorage.removeItem('shotokan_lock_until'); localStorage.removeItem('shotokan_attempts'); }
+
+    async function checkLogin(username, password) {
+        const u = (username || '').trim().toLowerCase();
+        const p = (password || '').trim();
+        if (!u || !p) return false;
+        const digest = await sha256Hex(`${u}:${p}|${PEPPER}`);
+        return USERS.some(x => x.u === u && x.h === digest);
+    }
+
+    const $ = (s, r = document) => r.querySelector(s);
+    const err = $('#err');
+    const form = $('#loginForm');
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        // trava?
+        const lockUntil = getLockUntil();
+        if (Date.now() < lockUntil) {
+        const secs = Math.ceil((lockUntil - Date.now()) / 1000);
+        err.textContent = `Muitas tentativas. Aguarde ${secs}s e tente novamente.`;
+        return;
+        }
+
+        const user = $('#user').value;
+        const pass = $('#pass').value;
+
+        // UX: desabilita botão
+        const btn = form.querySelector('button[type="submit"]');
+        btn.disabled = true; btn.textContent = 'Verificando...';
+
+        try {
+        const ok = await checkLogin(user, pass);
+        if (ok) {
+            clearLock();
+            sessionStorage.setItem('shotokan_auth', 'ok');
+            sessionStorage.setItem('shotokan_user', user.trim().toLowerCase());
+            location.href = 'admin-excel.html';
+        } else {
+            // conta tentativa
+            const n = (Number(localStorage.getItem('shotokan_attempts')) || 0) + 1;
+            localStorage.setItem('shotokan_attempts', String(n));
+            if (n >= MAX_ATTEMPTS) {
+            setLock(LOCK_MS);
+            err.textContent = 'Muitas tentativas inválidas. Aguarde 1 minuto.';
+            } else {
+            err.textContent = 'Usuário ou senha inválidos.';
+            }
+        }
+        } catch (e) {
+        console.error(e);
+        err.textContent = 'Erro ao validar. Tente novamente.';
+        } finally {
+        btn.disabled = false; btn.textContent = 'Entrar';
+        }
+    });
+    </script>
+</body>
+</html>
